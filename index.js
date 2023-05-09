@@ -2,9 +2,11 @@ const { error } = require("console");
 const fs = require("fs");
 const http = require("http");
 const url = require("url");
+const replacetemplate=require('./modules/replacetemplate')
 
 //////////////////////////////////////////
 /////////Files
+//      8/05/2023-monday
 
 //Blocking,Synchronous
 // const textIn=fs.readFileSync('./starter/txt/input.txt','utf-8')
@@ -14,7 +16,7 @@ const url = require("url");
 // fs.writeFileSync('./starter/txt/output.txt',textOut)
 // console.log('file written!!!');
 
-//Non-blocking,hronous
+//Non-blocking,asynchronous
 
 // fs.readFile('./starter/txt/start.txt','utf-8',(err,data1)=>{
 //     if(err) return console.log('Error 🌟');
@@ -31,29 +33,54 @@ const url = require("url");
 // console.log('will read the file');
 
 ///////////////////////////////////////////
-///////Server
+///////Server      
+//       9 / 05 / 2023 - Tuesday
 
-// const data = fs.readFile(`${__dirname}/dev-data/data.json`);
-// const dataObj = JSON.parse(data);
-
-
-
+const tempOverview=fs.readFileSync(`${__dirname}/templates/template-overview.html`,'utf-8')
+const tempCard = fs.readFileSync(`${__dirname}/templates/template-card.html`,"utf-8");
+const tempProduct = fs.readFileSync(`${__dirname}/templates/template-product.html`,"utf-8");
+const data = fs.readFileSync(`${__dirname}/dev-data/data.json`);
+const dataObj = JSON.parse(data);
 
 const server = http.createServer((req, res) => {
-  const pathName = req.url;
+  
+ const{query,pathname}= url.parse(req.url,true);
+ 
+////////////////////////////////
+////////OVERVIEW PAGE
 
-  if (pathName === "/" || pathName === "/overview") {
-    res.end("this is the OVERVIEW");
-  } else if (pathName === "/product") {
-    res.end("this is the PRODUCT");
-  } else if (pathName === "/api") {
+  if (pathname === "/" || pathname === "/overview") {
+    res.writeHead(200, { "Content-type": "text/html" });
+    const cardHtml=dataObj.map(el=>replacetemplate(tempCard,el)).join('')
+    const output=tempOverview.replace('{%PRODUCT_CARDS%}',cardHtml)
+    // console.log(cardHtml);
+    res.end(output);
+  } 
+  /////////////////////////////////
+  ////////PRODUCT PAGE
+  
+  else if (pathname === "/product") {
+    res.writeHead(200, { "Content-type": "text/html" });
+    const product=dataObj[query.id]
+    const output=replacetemplate(tempProduct,product)
+    res.end(output);
+  }
+
+  //////////////////////////////
+  ////////API PAGE
+
+   else if (pathname === "/api") {
     fs.readFile(`${__dirname}/dev-data/data.json`, "utf-8", (err, data) => {
       const productData = JSON.parse(data);
       res.writeHead(200, { "Content-type": "application/json" });
       res.end(data);
     });
     // res.end('API')
-  } else {
+  } 
+  ////////////////////////////
+  //////////PAGE NOT FOUND PAGE
+  
+  else {
     res.writeHead(404, {
       "Content-type": "text/html",
       "my-own-header": "hello-world",
@@ -65,28 +92,5 @@ server.listen(8000, "127.0.0.1", () => {
   console.log("Listening to request on port 8000");
 });
 
-// const server = http.createServer((req, res) => {
-//   const pathName = req.url;
-//   if (pathName === "/" || pathName === "/overview") {
-//     res.end("this is OVERVIEW");
-//   } else if (pathName === "/product") {
-//     res.end("this is the PRODUCT");
-//   } else if (pathName === "/api") {
 
-//    fs.readFile(`${__dirname}./dev-data/data.json`, "utf-8",(err, data) => {
-//       const productData =  JSON.stringify(data);
-//       console.log(productData);
-//       res.end(data)
-//     });
-//     res.end("API");
-//   } else {
-//     res.writeHead(404, {
-//       "Content-type": "text/html",
-//       "my-own-header": "hello world",
-//     });
-//     res.end("<h1>page not found!!!!!</h1>");
-//   }
-// });
-// server.listen(8000, "127.0.0.1", () => {
-//   console.log("listening to request on port 8000");
-// });
+
